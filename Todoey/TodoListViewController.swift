@@ -18,8 +18,12 @@ class TodoListViewController: UITableViewController {
         
     }
 
-    // Implement UITableViewDataSource methods here
+}
 
+//MARK: - UITavleViewDataSource Methods
+
+extension TodoListViewController {
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return itemArray.count
     }
@@ -29,5 +33,5 @@ class TodoListViewController: UITableViewController {
         cell.textLabel?.text = itemArray[indexPath.row]
         return cell
     }
+    
 }
-
