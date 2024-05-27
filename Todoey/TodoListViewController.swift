@@ -22,21 +22,26 @@ class TodoListViewController: UITableViewController {
 
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
-        let addTodo = UIAlertController(title: "Enter ToDo Item", message: nil, preferredStyle: .alert)
-        addTodo.addTextField()
+        var textField = UITextField()
         
-        let submitAction = UIAlertAction(title: "Submit", style: .default) { [unowned addTodo] _ in
-            if let answer = addTodo.textFields![0].text {
-                self.itemArray.append(answer)
+        let alert = UIAlertController(title: "Enter ToDo Item", message: nil, preferredStyle: .alert)
+        alert.addTextField { (alertTexField) in
+            alertTexField.placeholder = "Create new Item"
+            textField = alertTexField
+        }
+        
+        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+            if let newItem = textField.text, !newItem.isEmpty {
+                self.itemArray.append(newItem)
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
                 }
             }
         }
 
-        addTodo.addAction(submitAction)
+        alert.addAction(action)
 
-        present(addTodo, animated: true)
+        present(alert, animated: true, completion: nil)
         
     }
     
