@@ -17,9 +17,6 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        //        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
-        //            itemArray = items
-        
         let newItem = Item(title: "Find Mike")
         itemArray.append(newItem)
         
@@ -28,6 +25,10 @@ class TodoListViewController: UITableViewController {
         
         let newItem3 = Item(title: "Destroy Demogorgon")
         itemArray.append(newItem3)
+        
+        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
+            itemArray = items
+        }
         
     }
     
@@ -98,10 +99,11 @@ extension TodoListViewController {
                 self.itemArray.append(newItem)
                 DispatchQueue.main.async {
                     self.tableView.reloadData()
+                    self.defaults.set(self.itemArray, forKey: "TodoListArray")
                 }
             }
         }
-
+        
         alert.addAction(action)
 
         present(alert, animated: true, completion: nil)
