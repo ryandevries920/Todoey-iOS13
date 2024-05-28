@@ -65,6 +65,8 @@ extension TodoListViewController {
         let item = itemArray[indexPath.row]
         
         item.done = !item.done
+//        context.delete(itemArray[indexPath.row])
+//        itemArray.remove(at: indexPath.row)
         
         saveItems()
         
