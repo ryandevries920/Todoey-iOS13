@@ -8,12 +8,12 @@
 
 import Foundation
 
-class Item {
+class Item: Codable {
     
-    let title: String
+    var title: String
     var done: Bool = false
     
-    init(title: String) {
+    init(title: String = "") {
         self.title = title
     }
     
