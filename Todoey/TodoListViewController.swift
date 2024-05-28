@@ -15,33 +15,13 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
     }
     
-    //MARK: - Add new Item
+    
 
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
-        var textField = UITextField()
-        
-        let alert = UIAlertController(title: "Enter ToDo Item", message: nil, preferredStyle: .alert)
-        alert.addTextField { (alertTexField) in
-            alertTexField.placeholder = "Create new Item"
-            textField = alertTexField
-        }
-        
-        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
-            if let newItem = textField.text, !newItem.isEmpty {
-                self.itemArray.append(newItem)
-                DispatchQueue.main.async {
-                    self.tableView.reloadData()
-                }
-            }
-        }
-
-        alert.addAction(action)
-
-        present(alert, animated: true, completion: nil)
+        addTodoItem()
         
     }
     
@@ -81,5 +61,32 @@ extension TodoListViewController {
     
 }
 
+//MARK: - Add new Item
 
+extension TodoListViewController {
+    
+    func addTodoItem() {
+        
+        var textField = UITextField()
+        
+        let alert = UIAlertController(title: "Enter ToDo Item", message: nil, preferredStyle: .alert)
+        alert.addTextField { (alertTexField) in
+            alertTexField.placeholder = "Create new Item"
+            textField = alertTexField
+        }
+        
+        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+            if let newItem = textField.text, !newItem.isEmpty {
+                self.itemArray.append(newItem)
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+            }
+        }
 
+        alert.addAction(action)
+
+        present(alert, animated: true, completion: nil)
+    }
+    
+}
