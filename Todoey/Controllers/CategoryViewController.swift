@@ -54,17 +54,20 @@ extension CategoryViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        let category = categoryArray[indexPath.row]
-        
-//        category.done = !category.done
-//        context.delete(itemArray[indexPath.row])
-//        itemArray.remove(at: indexPath.row)
-        print(category.name!)
+        performSegue(withIdentifier: "goToItems", sender: self)
         saveCategories()
         
-        DispatchQueue.main.async { self.tableView.reloadData() }
+//        DispatchQueue.main.async { self.tableView.reloadData() }
+//        
+//        tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let destinationVC = segue.destination as! TodoListViewController
         
-        tableView.deselectRow(at: indexPath, animated: true)
+        if let indexPath = tableView.indexPathForSelectedRow {
+            destinationVC.selectedCategory = categoryArray[indexPath.row]
+        }
     }
     
 }
@@ -116,7 +119,7 @@ extension CategoryViewController {
     }
     
     func loadCategories(with request: NSFetchRequest<Category> = Category.fetchRequest()) {
-
+        
         do {
             categoryArray = try context.fetch(request)
         } catch {
