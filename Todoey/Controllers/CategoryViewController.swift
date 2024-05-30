@@ -42,6 +42,7 @@ extension CategoryViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         
         cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No Categorys Created yet"
+        cell.accessoryType = .disclosureIndicator
         
         return cell
     }

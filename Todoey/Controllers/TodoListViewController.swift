@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import SwipeCellKit
 
 class TodoListViewController: UITableViewController {
     
@@ -45,7 +46,9 @@ extension TodoListViewController {
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath) as! SwipeTableViewCell
+        
+        cell.delegate = self
         
         if let item = todoItems?[indexPath.row] {
             
@@ -65,20 +68,16 @@ extension TodoListViewController {
 extension TodoListViewController {
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        
         if let item = todoItems?[indexPath.row] {
             do {
                 try realm.write {
-                    item.setValue(!item.done, forKey: "done")
+                    item.done = !item.done
                 }
             } catch {
                 print("Error \(error)")
             }
         }
-//        let item = todoItems[indexPath.row]
-//        
-//        item.done = !item.done
-//        
-//        saveItems(Item)
         
         DispatchQueue.main.async { self.tableView.reloadData() }
         
@@ -160,4 +159,32 @@ extension TodoListViewController: UISearchBarDelegate {
             
         }
     }
+}
+
+//MARK: - Swipekit methods
+
+extension TodoListViewController: SwipeTableViewCellDelegate {
+    
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
+        guard orientation == .right else { return nil }
+
+        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
+
+            if let item = self.todoItems?[indexPath.row] {
+                do {
+                    try self.realm.write {
+                        self.realm.delete(item)
+                    }
+                } catch {
+                    print("Error \(error)")
+                }
+            }
+            self.tableView.reloadData()
+        }
+
+        deleteAction.image = UIImage(named: "delete")
+
+        return [deleteAction]
+    }
+    
 }
