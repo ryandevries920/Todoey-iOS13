@@ -95,33 +95,47 @@ extension TodoListViewController {
         var textField = UITextField()
         
         let alert = UIAlertController(title: "New Item", message: nil, preferredStyle: .alert)
-                alert.addTextField { (alertTextField) in
-                    alertTextField.placeholder = "Add a new item"
-                    textField = alertTextField
-                }
-                
-                let action = UIAlertAction(title: "Add", style: .default) { [weak self] (action) in
-                    if let title = textField.text, !title.isEmpty {
-                        if let currentCategory = self?.selectedCategory {
-                            do {
-                                try self?.realm.write {
-                                    let newItem = Item()
-                                    newItem.title = title
-                                    newItem.done = false
-                                    currentCategory.items.append(newItem)
-                                }
-                            } catch {
-                                print("Error saving new items, \(error)")
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Add a new item, Leave empty to cancel"
+            textField = alertTextField
+        }
+        
+        let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] (action) in
+            guard let self = self else { return }
+            
+            if let title = textField.text, !title.isEmpty {
+                if let currentCategory = self.selectedCategory {
+                    do {
+                        try self.realm.write {
+                            guard let newItem = Item(as: title) else {
+                                self.showErrorAlert(message: "Invalid item title.")
+                                return
                             }
-                            self?.tableView.reloadData()
+                            currentCategory.items.append(newItem)
                         }
+                        self.tableView.reloadData()
+                    } catch {
+                        self.showErrorAlert(message: "Error saving new item: \(error.localizedDescription)")
                     }
                 }
-                
-                alert.addAction(action)
-                present(alert, animated: true, completion: nil)
+            } else {
+                self.showErrorAlert(message: "Item title cannot be empty.")
             }
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
+        alert.addAction(addAction)
+        alert.addAction(cancelAction)
+        
+        present(alert, animated: true, completion: nil)
+    }
     
+    func showErrorAlert(message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true, completion: nil)
+    }
 }
 
 //MARK: - File Managment
@@ -141,12 +155,7 @@ extension TodoListViewController {
 extension TodoListViewController: UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        if let search = searchBar.text {
-            let items = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
-            todoItems = items?.where {
-                $0.title.contains(search, options: [.caseInsensitive, .diacriticInsensitive])
-            }
-        }
+        todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text!).sorted(byKeyPath: "dateCreated", ascending: true)
         DispatchQueue.main.async { self.tableView.reloadData() }
         DispatchQueue.main.async { searchBar.resignFirstResponder() }
         

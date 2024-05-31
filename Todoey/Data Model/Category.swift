@@ -14,4 +14,10 @@ class Category: Object {
     
     // To-many relationship with item
     var items = List<Item>()
+    
+    convenience init?(as name: String) {
+        self.init()
+        guard !name.isEmpty else { return nil }
+        self.name = name
+    }
 }

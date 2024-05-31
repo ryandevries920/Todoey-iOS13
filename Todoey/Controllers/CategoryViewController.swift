@@ -78,29 +78,48 @@ extension CategoryViewController {
         var textField = UITextField()
         
         let alert = UIAlertController(title: "New Category", message: nil, preferredStyle: .alert)
-        alert.addTextField { (alertTexField) in
-            alertTexField.placeholder = "Add a new category"
-            textField = alertTexField
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Add a new category, Leave empty to cancel"
+            textField = alertTextField
         }
         
-        let action = UIAlertAction(title: "Add", style: .default) { (action) in
-            
+        let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] (action) in
+            guard let self = self else { return }
             
             if let name = textField.text, !name.isEmpty {
-                let newCategory = Category()
-                newCategory.name = name
-                DispatchQueue.main.async { self.tableView.reloadData() }
-                self.save(category: newCategory)
+                if let newCategory = Category(as: name) {
+                    do {
+                        try realm.write {
+                            self.realm.add(newCategory)
+                        }
+                        DispatchQueue.main.async {
+                            self.tableView.reloadData()
+                        }
+                    } catch {
+                        self.showErrorAlert(message: "Error saving new category: \(error.localizedDescription)")
+                    }
+                } else {
+                    self.showErrorAlert(message: "Invalid category name.")
+                }
+            } else {
+                self.showErrorAlert(message: "Category name cannot be empty.")
             }
         }
         
-        alert.addAction(action)
-
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
+        alert.addAction(addAction)
+        alert.addAction(cancelAction)
+        
         present(alert, animated: true, completion: nil)
     }
     
+    func showErrorAlert(message: String) {
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true, completion: nil)
+    }
 }
-
 //MARK: - File Managment
 
 extension CategoryViewController {
