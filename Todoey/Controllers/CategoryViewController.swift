@@ -8,11 +8,8 @@
 
 import UIKit
 import RealmSwift
-import SwipeCellKit
 
-class CategoryViewController: UITableViewController {
-    
-    let realm = try! Realm()
+class CategoryViewController: SwipeTableViewController {
     
     var categoryArray: Results<Category>?
     
@@ -28,6 +25,37 @@ class CategoryViewController: UITableViewController {
         addTodoCategory()
         
     }
+    
+    //MARK: - Swipekit methods
+    
+    override func deleteCell(at indexPath: IndexPath) {
+        guard let categoryToDelete = categoryArray?[indexPath.row] else {
+            return
+        }
+
+            do {
+                try realm.write {
+                    // Delete all items associated with the category
+                    realm.delete(categoryToDelete.items)
+                    // Delete the category
+                    realm.delete(categoryToDelete)
+                }
+                categoryArray = realm.objects(Category.self)
+                
+                // Reload the table view data
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                }
+            } catch {
+                print("Error deleting category: \(error)")
+            }
+        
+    }
+    
+    override func editCell(at indexPath: IndexPath) {
+        editCategory(category: categoryArray?[indexPath.row])
+    }
+
 }
 
 //MARK: - UITavleViewDataSource Methods
@@ -35,14 +63,15 @@ class CategoryViewController: UITableViewController {
 extension CategoryViewController {
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categoryArray?.count ?? 1
-    }
+            // Ensure the data source is updated
+            categoryArray = realm.objects(Category.self)
+            
+            return categoryArray?.count ?? 0
+        }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath) as! SwipeTableViewCell
-        
-        cell.delegate = self
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No Categorys Created yet"
         cell.accessoryType = .disclosureIndicator
@@ -75,33 +104,6 @@ extension CategoryViewController {
 //MARK: - Add new or edit Item
 
 extension CategoryViewController {
-    
-    func openWindow(title: String, placeholder: String, action: String, initialValue: String? = nil, completion: @escaping (String?) -> Void) {
-        var textField = UITextField()
-        
-        let alert = UIAlertController(title: title, message: nil, preferredStyle: .alert)
-        alert.addTextField { (alertTextField) in
-            alertTextField.placeholder = placeholder
-            if let initialValue = initialValue {
-                alertTextField.text = initialValue
-            }
-            textField = alertTextField
-        }
-        
-        let addAction = UIAlertAction(title: action, style: .default) { [weak self] (action) in
-            guard let self = self else { return }
-            
-            completion(textField.text)
-        }
-        
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        
-        alert.addAction(addAction)
-        alert.addAction(cancelAction)
-        
-        // Assuming self is a UIViewController
-        self.present(alert, animated: true, completion: nil)
-    }
 
     func addTodoCategory() {
         openWindow(title: "Add new category", placeholder: "Name to add", action: "Add") { newName in
@@ -133,9 +135,7 @@ extension CategoryViewController {
                     try self.realm.write {
                         category!.name = name
                     }
-                    DispatchQueue.main.async {
-                        self.tableView.reloadData()
-                    }
+                    self.tableView.reloadData()
                 } catch {
                     self.showErrorAlert(message: "Error updating category name: \(error.localizedDescription)")
                 }
@@ -143,12 +143,6 @@ extension CategoryViewController {
                 self.showErrorAlert(message: "Category name cannot be empty.")
             }
         }
-    }
-    
-    func showErrorAlert(message: String, title: String = "Error") {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true, completion: nil)
     }
 }
 //MARK: - File Managment
@@ -170,42 +164,6 @@ extension CategoryViewController {
         
         categoryArray = realm.objects(Category.self)
         
-        DispatchQueue.main.async { self.tableView.reloadData() }
+        self.tableView.reloadData()
     }
-}
-
-//MARK: - Swipekit methods
-
-extension CategoryViewController: SwipeTableViewCellDelegate {
-    
-    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
-        guard orientation == .right else { return nil }
-
-        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
-
-            if let category = self.categoryArray?[indexPath.row] {
-                if category.items.count == 0 {
-                    do {
-                        try self.realm.write {
-                            self.realm.delete(category)
-                        }
-                    } catch {
-                        print("Error \(error)")
-                    }
-                } else {
-                    self.showErrorAlert(message: "Delete Items in Category first", title: "Warning")
-                }
-            }
-            self.tableView.reloadData()
-        }
-
-        deleteAction.image = UIImage(named: "delete")
-        
-        let editAction = SwipeAction(style: .default, title: "Edit") { [self] action, indexPath in
-            self.editCategory(category: categoryArray?[indexPath.row])
-        }
-
-        return self.categoryArray?[indexPath.row].items.count == 0 ? [deleteAction, editAction] : [editAction]
-    }
-    
 }

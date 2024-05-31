@@ -8,12 +8,10 @@
 
 import UIKit
 import RealmSwift
-import SwipeCellKit
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
-    let realm = try! Realm()
     
     var selectedCategory : Category? {
         didSet {
@@ -24,7 +22,6 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
     }
     
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -33,6 +30,23 @@ class TodoListViewController: UITableViewController {
         
     }
     
+    //MARK: - Swipekit methods
+        
+    override func deleteCell(at indexPath: IndexPath) {
+        if let item = self.todoItems?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(item)
+                }
+            } catch {
+                print("Error \(error)")
+            }
+        }
+    }
+    
+    override func editCell(at indexPath: IndexPath) {
+        editItem(item: todoItems?[indexPath.row])
+    }
     
 }
 
@@ -46,9 +60,7 @@ extension TodoListViewController {
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath) as! SwipeTableViewCell
-        
-        cell.delegate = self
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = todoItems?[indexPath.row] {
             
@@ -90,33 +102,6 @@ extension TodoListViewController {
 
 extension TodoListViewController {
     
-    func openWindow(title: String, placeholder: String, action: String, initialValue: String? = nil, completion: @escaping (String?) -> Void) {
-        var textField = UITextField()
-        
-        let alert = UIAlertController(title: title, message: nil, preferredStyle: .alert)
-        alert.addTextField { (alertTextField) in
-            alertTextField.placeholder = placeholder
-            if let initialValue = initialValue {
-                alertTextField.text = initialValue
-            }
-            textField = alertTextField
-        }
-        
-        let addAction = UIAlertAction(title: action, style: .default) { [weak self] (action) in
-            guard let self = self else { return }
-            
-            completion(textField.text)
-        }
-        
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        
-        alert.addAction(addAction)
-        alert.addAction(cancelAction)
-        
-        // Assuming self is a UIViewController
-        self.present(alert, animated: true, completion: nil)
-    }
-    
     func addTodoItem() {
         openWindow(title: "Add Item", placeholder: "New item to add", action: "Add") { newName in
             if let title = newName, !title.isEmpty {
@@ -143,7 +128,6 @@ extension TodoListViewController {
     func editItem(item: Item?) {
         openWindow(title: "String", placeholder: "String", action: "Save", initialValue: item!.title) { newName in
             if let title = newName, !title.isEmpty {
-                if let currentCategory = self.selectedCategory {
                     do {
                         try self.realm.write {
                             item?.title = title
@@ -152,7 +136,6 @@ extension TodoListViewController {
                     } catch {
                         self.showErrorAlert(message: "Error saving new item: \(error.localizedDescription)")
                     }
-                }
             } else {
                 self.showErrorAlert(message: "Item title cannot be empty.")
             }
@@ -197,36 +180,4 @@ extension TodoListViewController: UISearchBarDelegate {
             
         }
     }
-}
-
-//MARK: - Swipekit methods
-
-extension TodoListViewController: SwipeTableViewCellDelegate {
-    
-    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
-        guard orientation == .right else { return nil }
-
-        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
-
-            if let item = self.todoItems?[indexPath.row] {
-                do {
-                    try self.realm.write {
-                        self.realm.delete(item)
-                    }
-                } catch {
-                    print("Error \(error)")
-                }
-            }
-            self.tableView.reloadData()
-        }
-
-        deleteAction.image = UIImage(named: "delete")
-        
-        let editAction = SwipeAction(style: .default, title: "Edit") { [self] action, indexPath in
-            self.editItem(item: todoItems?[indexPath.row])
-        }
-
-        return [deleteAction, editAction]
-    }
-    
 }
