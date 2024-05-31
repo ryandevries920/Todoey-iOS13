@@ -90,20 +90,36 @@ extension TodoListViewController {
 
 extension TodoListViewController {
     
-    func addTodoItem() {
-        
+    func openWindow(title: String, placeholder: String, action: String, initialValue: String? = nil, completion: @escaping (String?) -> Void) {
         var textField = UITextField()
         
-        let alert = UIAlertController(title: "New Item", message: nil, preferredStyle: .alert)
+        let alert = UIAlertController(title: title, message: nil, preferredStyle: .alert)
         alert.addTextField { (alertTextField) in
-            alertTextField.placeholder = "Add a new item, Leave empty to cancel"
+            alertTextField.placeholder = placeholder
+            if let initialValue = initialValue {
+                alertTextField.text = initialValue
+            }
             textField = alertTextField
         }
         
-        let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] (action) in
+        let addAction = UIAlertAction(title: action, style: .default) { [weak self] (action) in
             guard let self = self else { return }
             
-            if let title = textField.text, !title.isEmpty {
+            completion(textField.text)
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+        
+        alert.addAction(addAction)
+        alert.addAction(cancelAction)
+        
+        // Assuming self is a UIViewController
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    func addTodoItem() {
+        openWindow(title: "Add Item", placeholder: "New item to add", action: "Add") { newName in
+            if let title = newName, !title.isEmpty {
                 if let currentCategory = self.selectedCategory {
                     do {
                         try self.realm.write {
@@ -122,13 +138,26 @@ extension TodoListViewController {
                 self.showErrorAlert(message: "Item title cannot be empty.")
             }
         }
+    }
+    
+    func editItem(item: Item?) {
+        openWindow(title: "String", placeholder: "String", action: "Save", initialValue: item!.title) { newName in
+            if let title = newName, !title.isEmpty {
+                if let currentCategory = self.selectedCategory {
+                    do {
+                        try self.realm.write {
+                            item?.title = title
+                        }
+                        self.tableView.reloadData()
+                    } catch {
+                        self.showErrorAlert(message: "Error saving new item: \(error.localizedDescription)")
+                    }
+                }
+            } else {
+                self.showErrorAlert(message: "Item title cannot be empty.")
+            }
+        }
         
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
-        
-        alert.addAction(addAction)
-        alert.addAction(cancelAction)
-        
-        present(alert, animated: true, completion: nil)
     }
     
     func showErrorAlert(message: String) {
@@ -192,8 +221,12 @@ extension TodoListViewController: SwipeTableViewCellDelegate {
         }
 
         deleteAction.image = UIImage(named: "delete")
+        
+        let editAction = SwipeAction(style: .default, title: "Edit") { [self] action, indexPath in
+            self.editItem(item: todoItems?[indexPath.row])
+        }
 
-        return [deleteAction]
+        return [deleteAction, editAction]
     }
     
 }
