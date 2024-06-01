@@ -77,14 +77,14 @@ extension CategoryViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
-        let category = categoryArray?[indexPath.row]
         
-        cell.textLabel?.text = category?.name ?? "No Categorys Created yet"
-        cell.accessoryType = .disclosureIndicator
-        if let bgColor = category?.bgColor {
-            cell.backgroundColor = UIColor(hexString: bgColor)
+        if let category = categoryArray?[indexPath.row] {
+            
+            cell.textLabel?.text = category.name
+            cell.accessoryType = .disclosureIndicator
+            cell.backgroundColor = UIColor(hexString: category.bgColor)
+            
         }
-        
         return cell
     }
     
