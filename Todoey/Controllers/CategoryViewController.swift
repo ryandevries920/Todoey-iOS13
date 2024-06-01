@@ -19,6 +19,8 @@ class CategoryViewController: SwipeTableViewController {
         
         swipeDelegate = self
         
+        tableView.separatorStyle = .none
+        
         loadCategories()
 
     }
@@ -75,10 +77,13 @@ extension CategoryViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        let category = categoryArray?[indexPath.row]
         
-        cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No Categorys Created yet"
+        cell.textLabel?.text = category?.name ?? "No Categorys Created yet"
         cell.accessoryType = .disclosureIndicator
-        cell.backgroundColor = UIColor.randomFlat()
+        if let bgColor = category?.bgColor {
+            cell.backgroundColor = UIColor(hexString: bgColor)
+        }
         
         return cell
     }
