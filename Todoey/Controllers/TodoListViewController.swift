@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
 class TodoListViewController: SwipeTableViewController {
     
@@ -16,7 +17,6 @@ class TodoListViewController: SwipeTableViewController {
     var selectedCategory : Category? {
         didSet {
             loadItems()
-            navigationItem.title = selectedCategory?.name
         }
     }
     
@@ -25,10 +25,38 @@ class TodoListViewController: SwipeTableViewController {
         
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        
+        setupNavBar()
+        
+    }
+    
+    @IBOutlet weak var searchBar: UISearchBar!
+    
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
         addTodoItem()
         
+    }
+    
+    //MARK: - navBar setup
+    
+    func setupNavBar () {
+        if let hexColor = selectedCategory?.bgColor {
+            guard let navBar = navigationController?.navigationBar else {fatalError("NavBar not found.")}
+            guard let navBarColor = UIColor(hexString: hexColor) else {fatalError("Unable to get color")}
+            navigationItem.title = selectedCategory?.name
+            let navBarAppearance = UINavigationBarAppearance()
+            navBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor(contrastingBlackOrWhiteColorOn: navBarColor, isFlat:true)]
+            navBarAppearance.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor(contrastingBlackOrWhiteColorOn: navBarColor, isFlat:true)]
+            navBarAppearance.backgroundColor = navBarColor
+            navBar.prefersLargeTitles = true
+            navBar.isTranslucent = false
+            navBar.standardAppearance = navBarAppearance
+            navBar.scrollEdgeAppearance = navBarAppearance
+            navBar.tintColor = UIColor(contrastingBlackOrWhiteColorOn: navBarColor, isFlat:true)
+            searchBar.barTintColor = navBarColor
+        }
     }
     
     //MARK: - Swipekit methods
@@ -66,6 +94,10 @@ extension TodoListViewController {
         if let item = todoItems?[indexPath.row] {
             
             cell.textLabel?.text = item.title
+            if let color = UIColor(hexString: selectedCategory!.bgColor)?.darken(byPercentage:CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
+                cell.backgroundColor = color
+                cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn: color, isFlat:true)
+            }
             
             cell.accessoryType = item.done ? .checkmark : .none
         } else {

@@ -21,6 +21,10 @@ class Category: Object {
         self.init()
         guard !name.isEmpty else { return nil }
         self.name = name
+        self.colorRandom()
+    }
+    
+    func colorRandom() {
         self.bgColor = UIColor.randomFlat().hexValue()
     }
 }

@@ -19,16 +19,36 @@ class CategoryViewController: SwipeTableViewController {
         
         swipeDelegate = self
         
-        tableView.separatorStyle = .none
-        
         loadCategories()
 
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        
+        setupNavBar()
+        
     }
 
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
         addTodoCategory()
         
+    }
+    
+    //MARK: - navBar setup
+    
+    func setupNavBar () {
+        let color = UIColor.flatBlue()
+        guard let navBar = navigationController?.navigationBar else {fatalError("NavBar not found.")}
+        let navBarAppearance = UINavigationBarAppearance()
+        navBarAppearance.titleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor(contrastingBlackOrWhiteColorOn: color, isFlat:true)]
+        navBarAppearance.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor: UIColor(contrastingBlackOrWhiteColorOn: color, isFlat:true)]
+        navBarAppearance.backgroundColor = color
+        navBar.prefersLargeTitles = true
+        navBar.isTranslucent = false
+        navBar.tintColor = UIColor(contrastingBlackOrWhiteColorOn: color, isFlat:true)
+        navBar.standardAppearance = navBarAppearance
+        navBar.scrollEdgeAppearance = navBarAppearance
     }
     
     //MARK: - Swipekit methods
@@ -79,10 +99,11 @@ extension CategoryViewController {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let category = categoryArray?[indexPath.row] {
-            
+            let color = UIColor(hexString: category.bgColor)
             cell.textLabel?.text = category.name
             cell.accessoryType = .disclosureIndicator
-            cell.backgroundColor = UIColor(hexString: category.bgColor)
+            cell.backgroundColor = color
+            cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn: color!, isFlat:true)
             
         }
         return cell
@@ -97,6 +118,8 @@ extension CategoryViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         performSegue(withIdentifier: "goToItems", sender: self)
+        
+        tableView.deselectRow(at: indexPath, animated: true)
 
     }
     
