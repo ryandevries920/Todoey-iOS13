@@ -10,13 +10,21 @@ import UIKit
 import RealmSwift
 import SwipeCellKit
 
+//MARK: - SwipeTableViewControllerDelegate
+
+protocol SwipeTableViewControllerDelegate: AnyObject {
+    func hasItems(at indexPath: IndexPath) -> Bool
+}
+
 class SwipeTableViewController: UITableViewController, SwipeTableViewCellDelegate {
     
     let realm = try! Realm()
     
+    weak var swipeDelegate: SwipeTableViewControllerDelegate?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        tableView.rowHeight = 80
+        tableView.rowHeight = 60
     }
     
     // MARK: - TableView DataSource Methods
@@ -36,31 +44,33 @@ class SwipeTableViewController: UITableViewController, SwipeTableViewCellDelegat
     // MARK: - SwipeTableViewCellDelegate Methods
     
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
-        
-        guard orientation == .right else { return nil }
-        
-        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
             
-            self.deleteCell(at: indexPath)
+            guard orientation == .right else { return nil }
             
+            let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
+                self.deleteCell(at: indexPath)
+            }
+            deleteAction.image = UIImage(named: "delete-icon")
+            
+            let editAction = SwipeAction(style: .default, title: "Edit") { action, indexPath in
+                self.editCell(at: indexPath)
+            }
+            editAction.image = UIImage(named: "more-icon")
+            
+            if swipeDelegate?.hasItems(at: indexPath) == true {
+                return [editAction]
+            } else {
+                return [deleteAction, editAction]
+            }
         }
-        
-        deleteAction.image = UIImage(named: "delete-icon")
-        
-        let editAction = SwipeAction(style: .default, title: "Edit") { [self] action, indexPath in
-            
-            self.editCell(at: indexPath)
-            
-        }
-        
-        editAction.image = UIImage(named: "more-icon")
-        
-        return [deleteAction, editAction]
-    }
     
     func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
         var options = SwipeOptions()
-        options.expansionStyle = .destructive
+        if swipeDelegate?.hasItems(at: indexPath) == true {
+            options.expansionStyle = .selection
+        } else {
+            options.expansionStyle = .destructive
+        }
         return options
     }
     

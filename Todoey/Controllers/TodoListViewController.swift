@@ -16,6 +16,7 @@ class TodoListViewController: SwipeTableViewController {
     var selectedCategory : Category? {
         didSet {
             loadItems()
+            navigationItem.title = selectedCategory?.name
         }
     }
     

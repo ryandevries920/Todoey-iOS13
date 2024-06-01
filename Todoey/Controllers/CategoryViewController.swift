@@ -16,6 +16,8 @@ class CategoryViewController: SwipeTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        swipeDelegate = self
+        
         loadCategories()
 
     }
@@ -165,5 +167,16 @@ extension CategoryViewController {
         categoryArray = realm.objects(Category.self)
         
         self.tableView.reloadData()
+    }
+}
+
+//MARK: - SwipeTableViewControllerDelegate
+extension CategoryViewController: SwipeTableViewControllerDelegate {
+    func hasItems(at indexPath: IndexPath) -> Bool {
+        if let category = categoryArray?[indexPath.row] {
+            return !category.items.isEmpty
+        } else {
+            return false
+        }
     }
 }
