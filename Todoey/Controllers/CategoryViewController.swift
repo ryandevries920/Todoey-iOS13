@@ -20,12 +20,14 @@ class CategoryViewController: SwipeTableViewController {
         swipeDelegate = self
         
         loadCategories()
-
+        
+        registerTableViewCells()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         
         setupNavBar()
+        tableView.reloadData()
         
     }
 
@@ -34,6 +36,7 @@ class CategoryViewController: SwipeTableViewController {
         addTodoCategory()
         
     }
+    
     
     //MARK: - navBar setup
     
@@ -95,17 +98,19 @@ extension CategoryViewController {
         }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryViewCell", for: indexPath) as! CategoryViewCell
         
-        let cell = super.tableView(tableView, cellForRowAt: indexPath)
-        
+        cell.delegate = self
+
         if let category = categoryArray?[indexPath.row] {
             let color = UIColor(hexString: category.bgColor)
-            cell.textLabel?.text = category.name
-            cell.accessoryType = .disclosureIndicator
+            cell.labelText?.text = category.name
+            cell.itemCount?.text = "\(String(itemsLeft(indexPath: indexPath))) of \(String(category.items.count))"
             cell.backgroundColor = color
-            cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn: color!, isFlat:true)
-            
+            cell.labelText?.textColor = UIColor(contrastingBlackOrWhiteColorOn: color!, isFlat: true)
+            cell.itemCount?.textColor = UIColor(contrastingBlackOrWhiteColorOn: color!, isFlat: true)
         }
+
         return cell
     }
     
@@ -208,5 +213,31 @@ extension CategoryViewController: SwipeTableViewControllerDelegate {
         } else {
             return false
         }
+    }
+}
+
+//MARK: - Custom ViewCell
+
+extension CategoryViewController {
+    
+    private func registerTableViewCells() {
+        let labelFieldCell = UINib(nibName: "CategoryViewCell", bundle: nil)
+        self.tableView.register(labelFieldCell, forCellReuseIdentifier: "CategoryViewCell")
+    }
+    
+    func itemsLeft (indexPath: IndexPath) -> Int {
+        
+        if let category = categoryArray?[indexPath.row] {
+            var count: Int = 0
+            for item in category.items {
+                if !item.done {
+                    count += 1
+                }
+            }
+            return count
+        } else {
+            return 0
+        }
+        
     }
 }

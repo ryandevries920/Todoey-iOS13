@@ -192,6 +192,7 @@ extension TodoListViewController {
                 try self.realm.write {
                     self.realm.delete(item)
                 }
+                loadItems()
             } catch {
                 print("Error \(error)")
             }
