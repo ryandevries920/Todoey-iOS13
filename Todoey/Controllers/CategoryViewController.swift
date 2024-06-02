@@ -13,6 +13,7 @@ import ChameleonFramework
 class CategoryViewController: SwipeTableViewController {
     
     var categoryArray: Results<Category>?
+    var selectedIndexPath: IndexPath?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,11 +31,21 @@ class CategoryViewController: SwipeTableViewController {
         tableView.reloadData()
         
     }
-
+    
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
         addTodoCategory()
         
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        super.prepare(for: segue, sender: sender)
+        
+        if segue.identifier == "gotoCategoryOptions" {
+            prepareForFirstSegue(segue, sender: sender)
+        } else if segue.identifier == "goToItems" {
+            prepareForSecondSegue(segue, sender: sender)
+        }
     }
     
     
@@ -60,30 +71,41 @@ class CategoryViewController: SwipeTableViewController {
         guard let categoryToDelete = categoryArray?[indexPath.row] else {
             return
         }
-
-            do {
-                try realm.write {
-                    // Delete all items associated with the category
-                    realm.delete(categoryToDelete.items)
-                    // Delete the category
-                    realm.delete(categoryToDelete)
-                }
-                categoryArray = realm.objects(Category.self)
-                
-                // Reload the table view data
-                DispatchQueue.main.async {
-                    self.tableView.reloadData()
-                }
-            } catch {
-                print("Error deleting category: \(error)")
+        
+        do {
+            try realm.write {
+                // Delete all items associated with the category
+                realm.delete(categoryToDelete.items)
+                // Delete the category
+                realm.delete(categoryToDelete)
             }
+            categoryArray = realm.objects(Category.self)
+            
+            // Reload the table view data
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+            }
+        } catch {
+            print("Error deleting category: \(error)")
+        }
         
     }
     
     override func editCell(at indexPath: IndexPath) {
-        editCategory(category: categoryArray?[indexPath.row])
+        selectedIndexPath = indexPath
+        performSegue(withIdentifier: "gotoCategoryOptions", sender: self)
+        
+        tableView.deselectRow(at: indexPath, animated: true)
+        
     }
-
+    
+    private func prepareForFirstSegue(_ segue: UIStoryboardSegue, sender: Any?) {
+        if let destinationVC = segue.destination as? CategoryOptionsViewController {
+            if let indexPath = selectedIndexPath {
+                destinationVC.selectedCategory = categoryArray?[indexPath.row]
+            }
+        }
+    }
 }
 
 //MARK: - UITavleViewDataSource Methods
@@ -128,11 +150,11 @@ extension CategoryViewController {
 
     }
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        let destinationVC = segue.destination as! TodoListViewController
-        
-        if let indexPath = tableView.indexPathForSelectedRow {
-            destinationVC.selectedCategory = categoryArray?[indexPath.row]
+    private func prepareForSecondSegue(_ segue: UIStoryboardSegue, sender: Any?) {
+        if let destinationVC = segue.destination as? TodoListViewController {
+            if let indexPath = tableView.indexPathForSelectedRow {
+                destinationVC.selectedCategory = categoryArray?[indexPath.row]
+            }
         }
     }
     

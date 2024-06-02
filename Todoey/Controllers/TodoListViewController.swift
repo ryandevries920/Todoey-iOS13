@@ -23,6 +23,7 @@ class TodoListViewController: SwipeTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        registerTableViewCells()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -81,17 +82,22 @@ extension TodoListViewController {
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: "ItemViewCell", for: indexPath) as! ItemViewCell
+        
+        cell.customDelegate = self
+        cell.delegate = self
         
         if let item = todoItems?[indexPath.row] {
             
-            cell.textLabel?.text = item.title
+            cell.labelText?.text = item.title
             if let color = UIColor(hexString: selectedCategory!.bgColor)?.darken(byPercentage:CGFloat(indexPath.row) / CGFloat(todoItems!.count)) {
                 cell.backgroundColor = color
-                cell.textLabel?.textColor = UIColor(contrastingBlackOrWhiteColorOn: color, isFlat:true)
+                cell.labelText?.textColor = UIColor(contrastingBlackOrWhiteColorOn: color, isFlat:true)
+                cell.checkButton.tintColor = UIColor(contrastingBlackOrWhiteColorOn: color, isFlat:true)
             }
+            let image = item.done ? "checkmark.square.fill" : "square"
+            cell.checkButton.setImage(UIImage(systemName: image), for: .normal)
             
-            cell.accessoryType = item.done ? .checkmark : .none
         } else {
             cell.textLabel?.text = "No Items Added"
         }
@@ -218,4 +224,34 @@ extension TodoListViewController: UISearchBarDelegate {
             
         }
     }
+}
+
+//MARK: - Custom Item cell with delegate
+
+extension TodoListViewController: ItemViewCellDelegate {
+    
+    func didTapCheckButton(in cell: ItemViewCell) {
+        if let indexPath = tableView.indexPath(for: cell), let item = todoItems?[indexPath.row] {
+                    do {
+                        try realm.write {
+                            item.done.toggle()
+                        }
+                        let imageName = item.done ? "checkmark.square.fill" : "square"
+                        cell.checkButton.setImage(UIImage(systemName: imageName), for: .normal)
+                    } catch {
+                        print("Error \(error)")
+                    }
+                }
+    }
+    
+    func didTapCell(in cell: ItemViewCell) {
+        print("cell tapped")
+    }
+    
+    
+    private func registerTableViewCells() {
+        let labelFieldCell = UINib(nibName: "ItemViewCell", bundle: nil)
+        self.tableView.register(labelFieldCell, forCellReuseIdentifier: "ItemViewCell")
+    }
+    
 }
