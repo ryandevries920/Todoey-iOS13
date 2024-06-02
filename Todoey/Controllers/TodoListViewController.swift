@@ -62,15 +62,7 @@ class TodoListViewController: SwipeTableViewController {
     //MARK: - Swipekit methods
         
     override func deleteCell(at indexPath: IndexPath) {
-        if let item = self.todoItems?[indexPath.row] {
-            do {
-                try self.realm.write {
-                    self.realm.delete(item)
-                }
-            } catch {
-                print("Error \(error)")
-            }
-        }
+        deleteItem(indexPath: indexPath)
     }
     
     override func editCell(at indexPath: IndexPath) {
@@ -192,6 +184,18 @@ extension TodoListViewController {
         todoItems = selectedCategory?.items.sorted(byKeyPath: "title", ascending: true)
 
         DispatchQueue.main.async { self.tableView.reloadData() }
+    }
+    
+    func deleteItem(indexPath: IndexPath) {
+        if let item = self.todoItems?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(item)
+                }
+            } catch {
+                print("Error \(error)")
+            }
+        }
     }
 }
 
